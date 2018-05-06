@@ -27,18 +27,6 @@ type coq_opts = {
   (* callback to handle async feedback *)
   fb_handler   : Feedback.feedback -> unit;
 
-  (* Initial LoadPath XXX: Use the coq_pkg record? *)
-  iload_path   : Mltop.coq_path list;
-
-  (* Libs to require in STM init *)
-  require_libs : (string * string option * bool option) list;
-
-  (* Async flags *)
-  aopts        : async_flags;
-
-  (* name of the top-level module *)
-  top_name     : string;
-
   (* callback to load cma/cmo files *)
   ml_load      : (string -> unit) option;
 
@@ -50,8 +38,6 @@ type coq_opts = {
 (* Low-level, internal Coq initialization                                 *)
 (**************************************************************************)
 let coq_init opts =
-
-  let open Names in
 
   if opts.debug then begin
     Printexc.record_backtrace true;
@@ -79,66 +65,57 @@ let coq_init opts =
   (* Feedback setup                                                         *)
   (**************************************************************************)
 
-  (* Whether to forward Glob output to the IDE. *)
-  let dumpglob = false in
-  let dump_opt =
-    if dumpglob then begin
-      Dumpglob.feedback_glob ();
-      "-feedback-glob"
-    end else begin
-      Dumpglob.noglob ();
-      "-no-glob"
-    end
-  in
-
   (* Initialize logging. *)
   ignore (Feedback.add_feeder opts.fb_handler);
-
-  (**************************************************************************)
-  (* Async setup                                                            *)
-  (**************************************************************************)
-
-  (* Set async flags; IMPORTANT, this has to happen before STM.init () ! *)
-  let stm_options = Option.cata (fun coqtop ->
-
-      let open Stm.AsyncOpts in
-      let opts =
-        { default_opts with
-          async_proofs_mode = APon;
-          (* Imitate CoqIDE *)
-          async_proofs_full = opts.aopts.async_full;
-          async_proofs_never_reopen_branch = not opts.aopts.deep_edits;
-          async_proofs_n_workers    = 3;
-          async_proofs_n_tacworkers = 3;
-        } in
-      (* async_proofs_worker_priority); *)
-      AsyncTaskQueue.async_proofs_flags_for_workers := [dump_opt];
-      CoqworkmgrApi.(init High);
-      (* Uh! XXXX *)
-      for i = 0 to Array.length Sys.argv - 1 do
-        Array.set Sys.argv i "-m"
-      done;
-      Array.set Sys.argv 0 coqtop;
-      opts
-    ) Stm.AsyncOpts.default_opts opts.aopts.enable_async in
 
   (**************************************************************************)
   (* Start the STM!!                                                        *)
   (**************************************************************************)
   Stm.init_core ();
 
-  (* Flags.debug := true; *)
+  (* End of initialization *)
+  ()
 
-  (* We need to declare a toplevel module name. *)
-  let sertop_dp = DirPath.make [Id.of_string opts.top_name] in
+(******************************************************************************)
+(* Async setup                                                                *)
+(******************************************************************************)
 
-  (* Return the initial state of the STM *)
-  let ndoc = { Stm.doc_type = Stm.Interactive sertop_dp;
-               require_libs = opts.require_libs;
-               iload_path   = opts.iload_path;
-               stm_options;
-             } in
-  Stm.new_doc ndoc
+(* Set async flags; IMPORTANT, this has to happen before STM.init () ! *)
+let process_stm_flags opts = Option.cata (fun coqtop ->
+
+    (* Whether to forward Glob output to the IDE. *)
+    let dumpglob = false in
+
+    let dump_opt =
+      if dumpglob then begin
+        Dumpglob.feedback_glob ();
+        "-feedback-glob"
+      end else begin
+        Dumpglob.noglob ();
+        "-no-glob"
+      end
+    in
+
+    let open Stm.AsyncOpts in
+    let opts =
+      { default_opts with
+        async_proofs_mode = APon;
+        (* Imitate CoqIDE *)
+        async_proofs_full = opts.async_full;
+        async_proofs_never_reopen_branch = not opts.deep_edits;
+        async_proofs_n_workers    = 3;
+        async_proofs_n_tacworkers = 3;
+      } in
+    (* async_proofs_worker_priority); *)
+    AsyncTaskQueue.async_proofs_flags_for_workers := [dump_opt];
+    CoqworkmgrApi.(init High);
+    (* Uh! XXXX *)
+    for i = 0 to Array.length Sys.argv - 1 do
+      Array.set Sys.argv i "-m"
+    done;
+    Array.set Sys.argv 0 coqtop;
+    opts
+  ) Stm.AsyncOpts.default_opts opts.enable_async
 
 (******************************************************************************)
 (* Coq Prelude Loading Defaults (to be improved)                              *)

@@ -98,6 +98,7 @@ module Proof      = Ser_proof
 module Goal       = Ser_goal
 module Tok        = Ser_tok
 module Genarg     = Ser_genarg
+module Mltop      = Ser_mltop
 
 (* Alias fails due to the [@@default in protocol] *)
 (* module Stm        = Ser_stm *)
@@ -210,6 +211,10 @@ type add_opts =
   [@with
      Sexplib.Conv.sexp_option := sexp_option;
   ]]
+  [@@deriving sexp]
+
+type newdoc_opts =
+  [%import: Serapi_protocol.newdoc_opts]
   [@@deriving sexp]
 
 type cmd =

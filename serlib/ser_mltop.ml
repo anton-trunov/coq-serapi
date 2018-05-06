@@ -10,28 +10,28 @@
 
 (************************************************************************)
 (* Coq serialization API/Plugin                                         *)
-(* Copyright 2016-2018 MINES ParisTech -- Dual License LGPL 2.1 / GPL3+ *)
+(* Copyright 2016-2018 MINES ParisTech                                  *)
 (* Written by: Emilio J. Gallego Arias                                  *)
 (************************************************************************)
 (* Status: Very Experimental                                            *)
 (************************************************************************)
 
-open Cmdliner
+open Sexplib.Conv
 
-val prelude         : string Term.t
-val async           : string option Term.t
-val async_full      : bool Term.t
-val deep_edits      : bool Term.t
-val implicit_stdlib : bool Term.t
-val printer         : Sertop_ser.ser_printer Term.t
-val debug           : bool Term.t
-val print0          : bool Term.t
-val length          : bool Term.t
-val rload_path      : Mltop.coq_path list Term.t
-val load_path       : Mltop.coq_path list Term.t
-val ml_include_path : Mltop.coq_path list Term.t
-val no_init         : bool Term.t
+module Names = Ser_names
 
-(* debug options *)
-val omit_loc : bool Term.t
-val omit_att : bool Term.t
+type add_ml =
+  [%import: Mltop.add_ml]
+  [@@deriving sexp]
+
+type vo_path_spec =
+  [%import: Mltop.vo_path_spec]
+  [@@deriving sexp]
+
+type coq_path_spec =
+  [%import: Mltop.coq_path_spec]
+  [@@deriving sexp]
+
+type coq_path =
+  [%import: Mltop.coq_path]
+  [@@deriving sexp]

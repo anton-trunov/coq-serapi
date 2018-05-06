@@ -662,6 +662,22 @@ module ControlUtil = struct
 end
 
 (******************************************************************************)
+(* Init / new document                                                        *)
+(******************************************************************************)
+type newdoc_opts = {
+
+  (* name of the top-level module *)
+  top_name     : string;
+
+  (* Initial LoadPath. [XXX: Use the coq_pkg record?] *)
+  iload_path   : Mltop.coq_path list;
+
+  (* Libs to require in STM init *)
+  require_libs : (string * string option * bool option) list;
+
+}
+
+(******************************************************************************)
 (* Help                                                                       *)
 (******************************************************************************)
 
@@ -683,6 +699,7 @@ let serproto_help () =
 (******************************************************************************)
 
 type cmd =
+  | NewDoc     of newdoc_opts
   | Add        of add_opts  * string
   | Cancel     of Stateid.t list
   | Exec       of Stateid.t
@@ -705,6 +722,18 @@ type cmd =
 let exec_cmd (cmd : cmd) =
   let doc = Stm.get_doc !doc_id in
   coq_protect @@ fun () -> match cmd with
+  | NewDoc opts   ->
+    let open Names in
+    let sertop_dp = DirPath.make [Id.of_string opts.top_name] in
+    let stm_options = Stm.AsyncOpts.default_opts in
+    let ndoc = { Stm.doc_type = Stm.Interactive sertop_dp;
+                 require_libs = opts.require_libs;
+                 iload_path   = opts.iload_path;
+                 stm_options;
+               } in
+    (* doc_id := fst Stm.(get_doc @@ new_doc ndoc); [] *)
+    let _ = Stm.new_doc ndoc in
+    doc_id := 0; []
   | Add (opt, s) -> snd @@ ControlUtil.add_sentences ~doc opt s
   | Cancel st    -> List.concat @@ List.map (fun x -> snd @@ ControlUtil.(cancel_sentence ~doc x)) st
   | Exec st      -> ignore(Stm.observe ~doc st); []
@@ -745,4 +774,3 @@ type tagged_cmd = cmd_tag * cmd
 type answer =
   | Answer    of cmd_tag * answer_kind
   | Feedback  of Feedback.feedback
-

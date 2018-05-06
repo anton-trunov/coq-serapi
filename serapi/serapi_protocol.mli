@@ -145,6 +145,22 @@ type add_opts = {
 }
 
 (******************************************************************************)
+(* Init / new document                                                        *)
+(******************************************************************************)
+type newdoc_opts = {
+
+  (* name of the top-level module *)
+  top_name     : string;
+
+  (* Initial LoadPath. [XXX: Use the coq_pkg record?] *)
+  iload_path   : Mltop.coq_path list;
+
+  (* Libs to require in STM init *)
+  require_libs : (string * string option * bool option) list;
+
+}
+
+(******************************************************************************)
 (* Help                                                                       *)
 (******************************************************************************)
 
@@ -155,6 +171,7 @@ type add_opts = {
 (******************************************************************************)
 
 type cmd =
+  | NewDoc     of newdoc_opts
   | Add        of add_opts  * string
   | Cancel     of Stateid.t list
   | Exec       of Stateid.t
@@ -198,4 +215,3 @@ type answer =
   (* implicit : bool; *)
 (*   async    : Sertop_init.async_flags; *)
 (* } *)
-

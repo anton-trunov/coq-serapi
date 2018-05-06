@@ -68,6 +68,12 @@ let length =
 
 (* We handle the conversion here *)
 
+let no_init =
+  let doc = "Omits the creation of a new document; this means the user \
+             will have to call `(NewDoc ...)` before Coq can be used \
+             and set there the proper loadpath, requires, ..." in
+  Arg.(value & flag & info ["no_init"] ~doc)
+
 let coq_lp_conv ~implicit (unix_path,lp) = Mltop.{
     path_spec = VoPath {
         coq_path  = Libnames.dirpath_of_string lp;

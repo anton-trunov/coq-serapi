@@ -214,21 +214,26 @@ let sercomp debug printer async coq_path ml_path lp1 lp2 in_file omit_loc omit_a
   (* let pp_opt  fb   = Sertop_util.feedback_opt_filter fb                in
    * let pp_feed fb   = Option.iter (fun fb -> pp_answer (SP.Feedback fb)) (pp_opt fb) in *)
 
-  let doc,sid = coq_init {
+  coq_init {
     (* XXXX *)
     fb_handler   = (fun _ -> ());
-
-    aopts        = { enable_async = async;
-                     async_full   = false;
-                     deep_edits   = false;
-                   };
-    iload_path;
-    require_libs = ["Coq.Init.Prelude", None, Some true];
-    top_name     = "SerComp";
     ml_load      = None;
     debug;
-  } in
+  };
 
+  let stm_options =
+    { enable_async = async;
+      async_full   = false;
+      deep_edits   = false;
+    } in
+
+  let sload_path = Sertop_init.coq_loadpath_default ~implicit:true ~coq_path @ iload_path in
+  let ndoc = { Stm.doc_type = Stm.VoDoc in_file;
+               require_libs = ["Coq.Init.Prelude", None, Some true];
+               iload_path   = sload_path;
+               stm_options  = Sertop_init.process_stm_flags stm_options;
+               } in
+  let doc, sid = Stm.new_doc ndoc in
   parse_document pp_sexp ~doc sid in_pa;
   close_in in_chan;
   close_document ()

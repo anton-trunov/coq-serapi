@@ -22,22 +22,12 @@ type async_flags = {
   deep_edits   : bool;
 }
 
+val process_stm_flags : async_flags -> Stm.AsyncOpts.stm_opt
+
 type coq_opts = {
 
   (* callback to handle async feedback *)
   fb_handler   : Feedback.feedback -> unit;
-
-  (* Initial LoadPath XXX: Use the coq_pkg record? *)
-  iload_path   : Mltop.coq_path list;
-
-  (* Libs to require in STM init *)
-  require_libs : (string * string option * bool option) list;
-
-  (* Async flags *)
-  aopts        : async_flags;
-
-  (* name of the top-level module *)
-  top_name     : string;
 
   (* callback to load cma/cmo files *)
   ml_load      : (string -> unit) option;
@@ -46,7 +36,7 @@ type coq_opts = {
   debug        : bool;
 }
 
-val coq_init : coq_opts -> Stm.doc * Stateid.t
+val coq_init : coq_opts -> unit
 
 (* Default load path for Coq's stdlib *)
 val coq_loadpath_default : implicit:bool -> coq_path:string -> Mltop.coq_path list

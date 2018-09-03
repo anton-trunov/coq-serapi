@@ -1,3 +1,10 @@
+_Version 0.6.0_:
+
+ * [general] support Coq 8.9,
+ * [serlib] support to serialize kernel environments,
+ * [serapi] new query `Env` that tries to print the current kernel environment,
+ * [serapi] Allow custom document creation using the `NewDoc` call.
+
 _Version 0.5.3_:
 
  * [sertop] Support for `-I` option (`--ml-include-path`).
